@@ -70,19 +70,19 @@ describe("VotingEngine", function () {
 
   describe("vote", () => {
     it("Should revert if incorrect amount", async () => {
-      let donation = {
+      let fee = {
         value: await ethers.utils.parseEther("0.001")
       };
       await voting.addVoting([applicant1.address, applicant2.address]);
-      expect(voting.vote(0,0, donation)).to.be.revertedWith("Incorrect fee amount!");
+      expect(voting.vote(0,0, fee)).to.be.revertedWith("Incorrect fee amount!");
     });
 
     it("Should revert if voting index is incorrect", async () => {
-      let donation = {
+      let fee = {
         value: await ethers.utils.parseEther("0.01")
       };
       await voting.addVoting([applicant1.address, applicant2.address]);
-      await expect(voting.connect(voter1).vote(1,0, donation)).to.be.revertedWith("Incorrect voting index!");
+      await expect(voting.connect(voter1).vote(1,0, fee)).to.be.revertedWith("Incorrect voting index!");
     }); 
   });
 
@@ -109,32 +109,64 @@ describe("VotingEngine", function () {
 
   describe("getVotes", () => {
     it("Should correctly show array of votes 1", async () => {
-      let donation = {
+      let fee = {
         value: await ethers.utils.parseEther("0.01")
       };
       await voting.addVoting([applicant1.address, applicant2.address]);
-      await voting.connect(voter1).vote(0,1, donation);
-      await voting.connect(voter2).vote(0,1, donation);
+      await voting.connect(voter1).vote(0,1, fee);
+      await voting.connect(voter2).vote(0,1, fee);
       expect((await voting.getVotes(0)).toString()).to.equal("0,2");
     });
     it("Should correctly show array of votes 2", async () => {
-      let donation = {
+      let fee = {
         value: await ethers.utils.parseEther("0.01")
       };
       await voting.addVoting([applicant1.address, applicant2.address]);
-      await voting.connect(voter1).vote(0,1, donation);
-      await voting.connect(voter2).vote(0,0, donation);
+      await voting.connect(voter1).vote(0,1, fee);
+      await voting.connect(voter2).vote(0,0, fee);
       expect((await voting.getVotes(0)).toString()).to.equal("1,1");
     });
   });
 
   describe("getVotingTime", () => {
     it("Check voting ends date is in the future"), async () => {
-    const duration = 3 * 24 * 60 * 60;
-    await voting.addVoting([applicant1.address, applicant2.address]);
-    const startAtTime = await voting.votings[0].startAt;
-    expect(voting.votings[0].startAt).to.eq(startAtTime + duration);
+      const duration = 3 * 24 * 60 * 60;
+      await voting.addVoting([applicant1.address, applicant2.address]);
+      const startAtTime = await voting.votings[0].startAt;
+      expect(await voting.votings[0].endsAt).to.eq(startAtTime + duration);
     }
+  });
+
+  describe("getWinner", async () => {
+    it("Should correctly show the winner of voting", async () => {
+      let fee = {
+        value: await ethers.utils.parseEther("0.01")
+      };
+      await voting.addVoting([applicant1.address, applicant2.address]);
+      await voting.connect(voter1).vote(0,1, fee);
+      await voting.connect(voter2).vote(0,1, fee);
+      await network.provider.send("evm_increaseTime", [3*24*60*60]);
+      await voting.connect(voter1).finish(0);
+    });
+  });
+
+  describe("isVotingStopped", async () => {
+    it("Should correctly show voting condition 1", async () => {
+      await voting.addVoting([applicant1.address, applicant2.address]);
+      expect(await voting.isVotingStopped(0)).to.eq(false);
+    });
+
+    it("Should correctly show voting condition 2", async () => {
+      let fee = {
+        value: await ethers.utils.parseEther("0.01")
+      };
+      await voting.addVoting([applicant1.address, applicant2.address]);
+      await voting.connect(voter1).vote(0,1, fee);
+      await voting.connect(voter2).vote(0,1, fee);
+      await network.provider.send("evm_increaseTime", [3*24*60*60]);
+      await voting.connect(voter2).finish(0);
+      expect(await voting.isVotingStopped(0)).to.eq(true);
+    });
   });
 
 });
