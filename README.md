@@ -1,6 +1,7 @@
 # Voting-Engine Hardhat Project
 
 ## Solidity Voting-Engine smart contract deployed in rinkeby testnet
+### 100% solidity coverage
 
 rinkeby testnet address: 0x58DF30687526221BD6C6AB971BA185A1EC9304Fc
 
