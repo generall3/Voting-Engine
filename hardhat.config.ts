@@ -6,7 +6,7 @@ import { task } from "hardhat/config";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import 'dotenv/config';
-//import "./tasks/index";
+import "./tasks/index";
 
 const { ETHERSCAN_API_KEY, INFURA_API_KEY, PRIVATE_KEY } = process.env;
 
